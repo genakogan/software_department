@@ -7,7 +7,7 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfbase.ttfonts import TTFont
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfFileReader, PdfFileWriter, PdfReader, PdfWriter
 import os
 
 try:
@@ -46,6 +46,15 @@ def get_dataSet():
     return df
 
 
+from io import BytesIO
+import os
+from PyPDF2 import PdfFileReader, PdfFileWriter
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+
 def modifyFile():
     """
     Function modify PDF file for student 
@@ -53,7 +62,7 @@ def modifyFile():
     """
     df = get_dataSet()
    
-    for i in range(len(df)-61):
+    for i in range(len(df)-2):
         
         packet = io.BytesIO()
         can = canvas.Canvas(packet, pagesize=letter)
@@ -70,7 +79,7 @@ def modifyFile():
 
             # Student name
             # Draws a string aligned on the first '.' (or other pivot character)
-            can.drawAlignedString(510-nameWidth(text), 694, text=text)
+            can.drawAlignedString(400-nameWidth(text), 694, text=text)
 
         # student id
         can.drawAlignedString(485, 677, df['ת.ז'][i])
@@ -80,23 +89,26 @@ def modifyFile():
         packet.seek(0)
 
         # create a new PDF with Reportlab
-        new_pdf = PdfFileReader(packet)
+        new_pdf = PdfReader(packet)
 
         # read your existing PDF
-        existing_pdf = PdfFileReader(open("PoorProgressing/test.pdf", "rb"))
-        output = PdfFileWriter()
+        existing_pdf = PdfReader("PoorProgressing/test.pdf")
+        output = PdfWriter()
 
         # add the "watermark" (which is the new pdf) on the existing page
-        page = existing_pdf.getPage(0)
-        page.mergePage(new_pdf.getPage(0))
-        output.addPage(page)
+        page = existing_pdf.pages[0]
+        page.merge_page(new_pdf.pages[0])
+        output.add_page(page)
 
         # finally, write "output" to a real file
         #outputStream = open(df['שם'][i]+".pdf", "wb")
-       
+        if not os.path.exists("PoorProgressing/results"):
+            os.makedirs("PoorProgressing/results")
         outputStream = open(os.path.join("PoorProgressing/results",df['שם'][i]+".pdf"), "wb")
         output.write(outputStream)
         outputStream.close()
+
+
 
 
 if __name__ == "__main__":
